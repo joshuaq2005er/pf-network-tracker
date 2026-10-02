@@ -7,7 +7,7 @@ function App() {
   const [flights, setFlights] = useState<PfFlight[]>(mockFlights);
   const [isLoading, setIsLoading] = useState(true);
   const [isConnected, setIsConnected] = useState(false);
-  const [selectedId, setSelectedId] = useState<string>(mockFlights[0].id);
+  const [selectedId, setSelectedId] = useState<string>(mockFlights[0]?.id || '');
   const [filterStatus, setFilterStatus] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -34,9 +34,11 @@ function App() {
     const load = async () => {
       try {
         const payload = await fetchPfControlFlights();
-        setFlights(payload);
-        setIsConnected(true);
-        setSelectedId((current) => current || payload[0]?.id || mockFlights[0].id);
+        setFlights(payload && payload.length > 0 ? payload : mockFlights);
+        setIsConnected(payload && payload.length > 0);
+        if (payload && payload.length > 0) {
+          setSelectedId(payload[0].id);
+        }
       } catch {
         setFlights(mockFlights);
         setIsConnected(false);
@@ -109,22 +111,26 @@ function App() {
             </div>
 
             <div className="flight-list">
-              {filteredFlights.map((flight) => (
-                <button
-                  key={flight.id}
-                  className={selectedFlight.id === flight.id ? 'flight-item selected' : 'flight-item'}
-                  onClick={() => setSelectedId(flight.id)}
-                >
-                  <div>
-                    <strong>{flight.callsign}</strong>
-                    <span>{flight.route}</span>
-                  </div>
-                  <div className="flight-meta">
-                    <span className={`status-badge ${flight.status.toLowerCase()}`}>{flight.status}</span>
-                    <small>{flight.altitude}</small>
-                  </div>
-                </button>
-              ))}
+              {filteredFlights.length > 0 ? (
+                filteredFlights.map((flight) => (
+                  <button
+                    key={flight.id}
+                    className={selectedFlight.id === flight.id ? 'flight-item selected' : 'flight-item'}
+                    onClick={() => setSelectedId(flight.id)}
+                  >
+                    <div>
+                      <strong>{flight.callsign}</strong>
+                      <span>{flight.route}</span>
+                    </div>
+                    <div className="flight-meta">
+                      <span className={`status-badge ${flight.status.toLowerCase()}`}>{flight.status}</span>
+                      <small>{flight.altitude}</small>
+                    </div>
+                  </button>
+                ))
+              ) : (
+                <div className="empty-state">No flights found</div>
+              )}
             </div>
           </div>
         </aside>
